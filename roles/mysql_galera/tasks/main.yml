@@ -89,6 +89,3 @@
       # Galera Node Configuration
       wsrep_node_address="{{ansible_default_ipv4.address}}" 
       wsrep_node_name="{{ansible_hostname}}"
-
-
-#- name: 
