@@ -1,0 +1,29 @@
+---
+#Playbook to setup mysql_galera + haproxy + keepalive
+
+- name: mysql_galera + haproxy
+  hosts: zabbix 
+  sudo: True
+
+  roles:
+
+   - { role: mysql_galera }
+   - { role: haproxy}
+   - { role: ipv4_forward }
+   - { role: keepalived }
+
+- name: First node of galera start
+  hosts: zabbix[0]
+  sudo: True
+  
+  roles:
+
+   - { role: galera_1st_start}
+
+- name: Start other nodes of the cluster
+  hosts: zabbix[1:]
+  sudo: True
+
+  roles:
+
+   - { role: galera_2nd_3rd_start}

@@ -1,0 +1,16 @@
+---
+
+# Allow forwarding ipv4 for virtual_Ip
+
+- name: Add lines into sysctl.conf
+  lineinfile:
+    path: /etc/sysctl.conf
+    insertafter: '^#net.ipv4.ip_forward = 1'
+    line: "{{ item.line }}"
+  with_items:
+    - { line: 'net.ipv4.ip_forward = 1' }
+    - { line: 'net.ipv4.ip_nonlocal_bind = 1' }
+
+- name: Restart sysctl
+  shell: |
+    sysctl --system

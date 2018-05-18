@@ -1,0 +1,9 @@
+---
+
+- name: Start 2nd and 3rd galera nodes
+  command: systemctl start mysql
+
+- name: reatsrt Haproxy to get access to check the node status
+  service:
+   name: haproxy
+   state: restarted

@@ -1,0 +1,69 @@
+---
+
+# setup HaProxy and it's configuration
+
+- name: Install HaProxy
+  apt: name=haproxy state=present
+
+- name: Rename haproxy.cfg to default
+  command: mv /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.default
+
+- name: Create empty haproxy.cfg
+  command: touch /etc/haproxy/haproxy.cfg
+
+- name: Configure HaProxy
+  blockinfile:
+    path: /etc/haproxy/haproxy.cfg
+    block: |
+      global
+        log /dev/log    local0
+        log /dev/log    local1 notice
+        chroot /var/lib/haproxy
+        stats socket /run/haproxy/admin.sock mode 660 level admin
+        stats timeout 30s
+        user haproxy
+        group haproxy
+        daemon
+        
+      defaults
+        mode                    tcp
+        log                     global
+        option                  tcplog
+        option                  dontlognull
+        option http-server-close
+        option                  redispatch
+        retries                 3
+        timeout http-request    10s
+        timeout queue           1m
+        timeout connect         10s
+        timeout client          1m
+        timeout server          1m
+        timeout http-keep-alive 10s
+        timeout check           10s
+        maxconn                 3000
+        
+        
+      frontend galera
+        bind {{virtual_ip}}:{{virtual_port}}
+        mode tcp
+        option tcpka
+        default_backend galera
+        
+      frontend web
+        bind *:8080
+        mode http
+        default_backend web
+        
+      backend galera
+        balance roundrobin
+        option mysql-check user {{mysql_check_user}}
+        server node1 {{node1_ip}}:3306 check weight 1
+        server node2 {{node2_ip}}:3306 check weight 1
+        server node3 {{node3_ip}}:3306 check weight 1
+        
+      backend web
+         mode http
+         stats enable
+         stats uri /
+         stats realm Strictly\ Private
+         stats auth {{ha_admin}}:{{ha_admin_pass}}

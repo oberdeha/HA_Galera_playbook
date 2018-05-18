@@ -1,0 +1,15 @@
+---
+
+- name: start 1st node in claster
+  shell: |
+     /usr/bin/mysqld_bootstrap --wsrep-new-cluster
+
+- name: add users
+  shell: |
+    mysql -e "create user '{{mysql_check_user}}'@'{{ item }}'"
+  with_items: ["{{node1_ip}}", "{{node2_ip}}", "{{node3_ip}}", "{{virtual_ip}}"]
+
+- name: reatsrt Haproxy to get access to check the node status
+  service:
+   name: haproxy
+   state: restarted

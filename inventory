@@ -1,0 +1,25 @@
+[host_group]
+node1 ansible_user=@your root user@ server_id=1 node_priority=102 node_state=MASTER
+node2 ansible_user=@your root user@ server_id=2 node_priority=101 node_state=BACKUP
+node3 ansible_user=@your root user@ server_id=3 node_priority=100 node_state=BACKUP
+
+[host_group:vars]
+# Change this values
+# ip addr of the nodes
+node1_ip=1.1.1.1
+node2_ip=1.1.1.2
+node3_ip=1.1.1.3
+# user for haproxy check of the db server availability
+mysql_check_user=@haproxy_check@
+# name of the database that would replicate
+database_name=database
+cluster_name=test_cluster
+# virtual Ip Address. The App should use it to connect to Galera
+virtual_ip=1.1.1.4
+# virtual port. The App should use it to connect to Galera. 3306 is used for local MySQL instance. Haproxy forward all requests from 3307 to 3306 on each node
+virtual_port=3307
+# Haproxy credentials for web monitoring
+ha_admin=admin
+ha_admin_pass=pass
+# VRRP must be uniqe for the network for each virtual instance
+virtual_router_id=50

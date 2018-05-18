@@ -1,0 +1,94 @@
+---
+
+# MySQL Galera Cluster setup and configure
+
+- name: Add an apt key
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: BC19DDBA
+
+- name: Add repository MySQL_wsrep_5.7
+  apt_repository:
+    repo: deb http://releases.galeracluster.com/mysql-wsrep-5.7/ubuntu xenial  main
+    state: present
+
+- name: Add repository galera3
+  apt_repository:
+    repo: deb http://releases.galeracluster.com/galera-3/ubuntu xenial  main
+    state: present
+
+- name: Install pakages
+  apt: update_cache=yes
+  apt: name={{ item }} state=installed
+  with_items:
+      - mysql-wsrep-5.7
+      - mysql-wsrep-client-5.7
+      - mysql-wsrep-common-5.7
+      - mysql-wsrep-server-5.7
+      - galera-3
+      - galera-arbitrator-3
+
+- name: Remove timeout when new node is syncing
+  lineinfile:
+    path: /lib/systemd/system/mysql.service
+    line: 'TimeoutStartSec=180s'
+    line: 'TimeoutStartSec=infinity'
+
+- name: Comment bind-adress
+  lineinfile:
+    path: /etc/mysql/my.cnf
+    regexp: '^bind-address           = 127.0.0.1'
+    line: '#bind-address           = 127.0.0.1'
+
+
+- name: Crate mysql and mysql-log directory
+  file:
+    path: /opt/mysql
+    state: directory
+    owner: mysql
+    group: mysql
+    mode: "u=rwX,g=rX,o=rX"
+    recurse: yes
+  file:
+    path: /opt/mysql-log
+    state: directory
+    owner: mysql
+    group: mysql
+    mode: "u=rwX,g=rX,o=rX"
+    recurse: yes
+
+- name: Create galera config file
+  command: touch /etc/mysql/conf.d/galera.cnf
+
+- name: Add text to config galera
+  blockinfile:
+    path: /etc/mysql/conf.d/galera.cnf
+    block: |
+      [mysqld]
+      server-id               = {{server_id}}
+      log_bin                 = /opt/mysql-log/mysql-bin.log
+      expire_logs_days        = 4
+      max_binlog_size         = 100M
+      binlog_do_db            = {{database_name}}
+      log-slave-updates
+      binlog_format=ROW
+      default-storage-engine=innodb
+      innodb_autoinc_lock_mode=2
+      bind-address=0.0.0.0
+      
+      # Galera Provider Configuration
+      wsrep_on=ON
+      wsrep_provider=/usr/lib/galera/libgalera_smm.so
+      
+      # Galera Cluster Configuration
+      wsrep_cluster_name="{{cluster_name}}"
+      wsrep_cluster_address="gcomm://{{node1_ip}},{{node2_ip}},{{node3_ip}}"
+      # Galera Synchronization Configuration
+      wsrep_sst_method=rsync
+      
+      # Galera Node Configuration
+      wsrep_node_address="{{ansible_default_ipv4.address}}" 
+      wsrep_node_name="{{ansible_hostname}}"
+
+
+#- name: 

@@ -1,0 +1,45 @@
+---
+
+# Install and configure keepalived
+
+- name: install keepalived
+  apt: name=keepalived state=present
+
+- name: create keepalived.conf
+  command: touch /etc/keepalived/keepalived.conf
+
+- name: add lines to keepalived.conf
+  blockinfile:
+    path: /etc/keepalived/keepalived.conf
+    block: |
+     global_defs {
+       router_id {{ansible_hostname}}
+     }
+     vrrp_script haproxy {
+       script "killall -0 haproxy"
+       interval 2
+       weight 3
+     }
+     vrrp_instance {{virtual_router_id}} {
+       virtual_router_id {{virtual_router_id}}
+       advert_int 1
+       priority {{node_priority}}
+       state {{node_state}}
+       interface ens160
+       virtual_ipaddress {
+         {{virtual_ip}}/22  dev ens160
+       }
+       track_script {
+         haproxy
+       }
+     }
+
+- name: start haproxy
+  service:
+    name: haproxy
+    state: started
+
+- name: start keepalived
+  service:
+    name: keepalived
+    state: started
