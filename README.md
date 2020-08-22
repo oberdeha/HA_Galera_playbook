@@ -8,3 +8,5 @@ Firs of You need to check the inventory file. There you will find all
 variable, that are using in script.
 
 
+blablabla
+
